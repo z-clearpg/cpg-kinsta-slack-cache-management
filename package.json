@@ -1,0 +1,21 @@
+{
+  "name": "kinsta-slack-cache-manager",
+  "version": "1.0.0",
+  "description": "Slack bot for clearing Kinsta WordPress site cache",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "@slack/bolt": "^3.17.1",
+    "axios": "^1.6.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

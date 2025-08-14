@@ -1,0 +1,10 @@
+[build]
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/slack/events"
+  to = "/.netlify/functions/slack-bot"
+  status = 200

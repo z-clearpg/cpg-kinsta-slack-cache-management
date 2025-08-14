@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:kinsta.com)",
+      "WebFetch(domain:api-docs.kinsta.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(git init:*)",
+      "Bash(git config:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "defaultMode": "acceptEdits"
+  }
+}
