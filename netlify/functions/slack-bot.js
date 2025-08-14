@@ -20,10 +20,10 @@ const kinstaApiClient = axios.create({
 
 async function getCompanyId() {
   try {
-    const response = await kinstaApiClient.get('/companies');
-    return response.data.company.id;
+    const response = await kinstaApiClient.get('/validate');
+    return response.data.company;
   } catch (error) {
-    console.error('Error fetching company:', error.response?.data || error.message);
+    console.error('Error validating API key:', error.response?.data || error.message);
     throw error;
   }
 }
@@ -41,7 +41,9 @@ async function getSites() {
 
 async function clearSiteCache(environmentId) {
   try {
-    const response = await kinstaApiClient.post(`/sites/environments/${environmentId}/clear-cache`);
+    const response = await kinstaApiClient.post(`/sites/tools/clear-cache`, {
+      environment_id: environmentId
+    });
     return response.data;
   } catch (error) {
     console.error('Error clearing cache:', error.response?.data || error.message);
