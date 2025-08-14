@@ -18,9 +18,20 @@ const kinstaApiClient = axios.create({
   }
 });
 
+async function getCompanyId() {
+  try {
+    const response = await kinstaApiClient.get('/companies');
+    return response.data.company.id;
+  } catch (error) {
+    console.error('Error fetching company:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 async function getSites() {
   try {
-    const response = await kinstaApiClient.get('/sites');
+    const companyId = await getCompanyId();
+    const response = await kinstaApiClient.get(`/sites?company=${companyId}&include_environments=true`);
     return response.data.company.sites || [];
   } catch (error) {
     console.error('Error fetching sites:', error.response?.data || error.message);
@@ -28,11 +39,9 @@ async function getSites() {
   }
 }
 
-async function clearSiteCache(siteId) {
+async function clearSiteCache(environmentId) {
   try {
-    const response = await kinstaApiClient.post(`/sites/tools/clear-cache`, {
-      site_id: siteId
-    });
+    const response = await kinstaApiClient.post(`/sites/environments/${environmentId}/clear-cache`);
     return response.data;
   } catch (error) {
     console.error('Error clearing cache:', error.response?.data || error.message);
@@ -54,13 +63,18 @@ app.command('/clear-cache', async ({ command, ack, respond }) => {
       return;
     }
 
-    const siteOptions = sites.map(site => ({
-      text: {
-        type: 'plain_text',
-        text: `${site.display_name} (${site.name})`
-      },
-      value: site.id
-    }));
+    const siteOptions = [];
+    sites.forEach(site => {
+      site.environments.forEach(env => {
+        siteOptions.push({
+          text: {
+            type: 'plain_text',
+            text: `${site.display_name} - ${env.display_name} (${env.name})`
+          },
+          value: env.id
+        });
+      });
+    });
 
     await respond({
       text: 'Select a site to clear cache:',
@@ -95,18 +109,18 @@ app.command('/clear-cache', async ({ command, ack, respond }) => {
 app.action('site_select', async ({ body, ack, respond }) => {
   await ack();
 
-  const selectedSiteId = body.actions[0].selected_option.value;
-  const siteName = body.actions[0].selected_option.text.text;
+  const selectedEnvironmentId = body.actions[0].selected_option.value;
+  const environmentName = body.actions[0].selected_option.text.text;
 
   await respond({
-    text: `Confirm cache clearing for ${siteName}?`,
+    text: `Confirm cache clearing for ${environmentName}?`,
     response_type: 'ephemeral',
     blocks: [
       {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `Are you sure you want to clear the cache for *${siteName}*?`
+          text: `Are you sure you want to clear the cache for *${environmentName}*?`
         }
       },
       {
@@ -120,7 +134,7 @@ app.action('site_select', async ({ body, ack, respond }) => {
             },
             style: 'primary',
             action_id: 'confirm_clear',
-            value: selectedSiteId
+            value: selectedEnvironmentId
           },
           {
             type: 'button',
@@ -139,7 +153,7 @@ app.action('site_select', async ({ body, ack, respond }) => {
 app.action('confirm_clear', async ({ body, ack, respond }) => {
   await ack();
 
-  const siteId = body.actions[0].value;
+  const environmentId = body.actions[0].value;
 
   try {
     await respond({
@@ -147,7 +161,7 @@ app.action('confirm_clear', async ({ body, ack, respond }) => {
       response_type: 'ephemeral'
     });
 
-    await clearSiteCache(siteId);
+    await clearSiteCache(environmentId);
 
     await respond({
       text: '✅ Cache cleared successfully!',
