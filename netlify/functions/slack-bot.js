@@ -13,7 +13,12 @@ const app = new App({
 
 registerHandlers(app);
 
-module.exports.handler = async (event, context, callback) => {
-  const handler = await awsLambdaReceiver.start();
-  return handler(event, context, callback);
+// Node 24 Lambda runtimes dropped support for the callback-style handler, so we
+// use the promise-returning signature: await the receiver's handler and return
+// its { statusCode, body } result directly instead of passing a callback.
+const receiverHandler = awsLambdaReceiver.start();
+
+module.exports.handler = async (event, context) => {
+  const handler = await receiverHandler;
+  return handler(event, context);
 };
