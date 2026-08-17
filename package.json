@@ -8,6 +8,7 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.7.13",
     "@slack/bolt": "^3.17.1",
     "axios": "^1.6.5",
     "dotenv": "^16.3.1"
