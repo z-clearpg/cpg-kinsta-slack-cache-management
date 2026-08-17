@@ -9,6 +9,10 @@ const awsLambdaReceiver = new AwsLambdaReceiver({
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   receiver: awsLambdaReceiver,
+  // Skip the auth.test round-trip Bolt otherwise makes during initialization.
+  // On a cold Lambda that call (plus init time) pushed the slash-command ack
+  // past Slack's 3s limit -> operation_timeout. We don't need the auth data.
+  deferInitialization: true,
 });
 
 registerHandlers(app);
