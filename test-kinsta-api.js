@@ -1,33 +1,33 @@
-const axios = require('axios');
 require('dotenv').config();
 
-const kinstaApiClient = axios.create({
-  baseURL: 'https://api.kinsta.com/v2',
-  headers: {
-    'Authorization': `Bearer ${process.env.KINSTA_API_KEY}`,
-    'Content-Type': 'application/json'
-  }
-});
+const {
+  getLiveEnvironments,
+  clearSiteCache,
+  pollOperation
+} = require('./lib/kinsta');
 
 async function testCacheClear() {
   try {
-    console.log('Getting sites...');
-    const validateResponse = await kinstaApiClient.get('/validate');
-    const companyId = validateResponse.data.company;
-    const sitesResponse = await kinstaApiClient.get(`/sites?company=${companyId}&include_environments=true`);
-    
-    // Get first environment ID for testing
-    const firstSite = sitesResponse.data.company.sites[0];
-    const firstEnv = firstSite.environments[0];
-    
-    console.log(`\nTesting cache clear for: ${firstSite.display_name} - ${firstEnv.display_name}`);
-    console.log(`Environment ID: ${firstEnv.id}`);
-    
-    const clearResponse = await kinstaApiClient.post(`/sites/tools/clear-cache`, {
-      environment_id: firstEnv.id
-    });
-    console.log('Cache clear response:', JSON.stringify(clearResponse.data, null, 2));
-    
+    console.log('Fetching live environments...');
+    const environments = await getLiveEnvironments();
+
+    if (environments.length === 0) {
+      console.log('No live environments found on this Kinsta account.');
+      return;
+    }
+
+    const target = environments[0];
+    console.log(`\nTesting cache clear for: ${target.siteName} (${target.primaryDomain || 'no domain'})`);
+    console.log(`Environment ID: ${target.environmentId}`);
+
+    const { operation_id: operationId } = await clearSiteCache(target.environmentId);
+    console.log(`Operation started: ${operationId}`);
+
+    console.log('Polling for completion...');
+    const result = await pollOperation(operationId);
+    console.log(result.success
+      ? `✅ Confirmed cleared: ${result.message}`
+      : `⚠️ Did not confirm: ${result.message}`);
   } catch (error) {
     console.error('Error:', error.response?.data || error.message);
   }
