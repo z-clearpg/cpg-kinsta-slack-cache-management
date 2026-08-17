@@ -32,29 +32,22 @@ A simple Slack bot for clearing WordPress site cache on Kinsta hosting.
 
 ## Usage
 
-**Fast path — pass a domain or site name directly:**
-
-```
-/clear-cache clear-pg.com
-```
-
-If the argument *exactly* matches one live site's domain or title (case-insensitive),
-the bot clears that site's cache immediately — no picker, no confirmation. Matching is
-exact, not fuzzy, so a partial or mistyped argument can never clear the wrong site; it
-just falls back to the picker. An ambiguous argument (matching two sites) also falls
-back to the picker.
-
-**Interactive path — no argument:**
-
-Type `/clear-cache` with nothing after it to:
-1. Start typing a site **name or domain** — the picker filters live sites as you
-   type, matching against the site title and all of its domains (so you can find a
-   site by domain even when the title doesn't match the domain).
+Type `/clear-cache` (any text after it is ignored) to:
+1. Start typing a site **name or domain** in the picker — it filters live sites as
+   you type, matching against the site title and all of its domains (so you can find
+   a site by domain even when the title doesn't match the domain).
 2. Select the site (only **live** environments are shown — staging is never listed).
-3. Confirm cache clearing.
+3. Click **Yes, clear cache** to confirm.
 
-Either way, the bot starts the clear and **polls Kinsta until it actually completes**,
-then reports real success, failure, or a timeout — it won't claim success prematurely.
+The bot then **polls Kinsta until the clear actually completes** and reports real
+success or failure — it won't claim success prematurely.
+
+> Note: clearing directly from the slash command (e.g. `/clear-cache clear-pg.com`)
+> is intentionally not supported. On Netlify's Lambda runtime, Bolt's
+> `AwsLambdaReceiver` doesn't acknowledge the command until the whole handler
+> finishes, so doing the clear inline exceeded Slack's 3-second limit
+> (`operation_timeout`). The clear runs from the interactive **button** instead,
+> which Slack doesn't hold to that limit.
 
 ## Architecture
 
