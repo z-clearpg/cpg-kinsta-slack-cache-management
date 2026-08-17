@@ -7,8 +7,13 @@ const awsLambdaReceiver = new AwsLambdaReceiver({
 });
 
 const app = new App({
-  token: process.env.SLACK_BOT_TOKEN,
   receiver: awsLambdaReceiver,
+  // Supplying a static authorize function makes Bolt skip the auth.test network
+  // call it otherwise runs at startup. On a cold Lambda that call added seconds
+  // to init (measured ~6.8s cold), blowing Slack's 3s limit. Single-workspace
+  // bot: just return the bot token. (Unlike deferInitialization, this keeps the
+  // authorize function defined, so event handling still works.)
+  authorize: async () => ({ botToken: process.env.SLACK_BOT_TOKEN }),
 });
 
 registerHandlers(app);
